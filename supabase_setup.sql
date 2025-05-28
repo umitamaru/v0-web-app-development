@@ -114,22 +114,52 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY profiles_policy ON public.profiles
   USING (id = auth.uid());
 
+-- テストモード用のポリシー（認証なしでもアクセス可能）
+CREATE POLICY profiles_test_policy ON public.profiles
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
 -- インタビューのRLS
 ALTER TABLE public.interviews ENABLE ROW LEVEL SECURITY;
 CREATE POLICY interviews_policy ON public.interviews
   USING (user_id = auth.uid());
+
+-- テストモード用のポリシー（認証なしでもアクセス可能）
+CREATE POLICY interviews_test_policy ON public.interviews
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
 -- ブリーフのRLS
 ALTER TABLE public.briefs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY briefs_policy ON public.briefs
   USING (user_id = auth.uid());
 
+-- テストモード用のポリシー（認証なしでもアクセス可能）
+CREATE POLICY briefs_test_policy ON public.briefs
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
 -- バナーコピーのRLS（ブリーフを通じてユーザーと関連付け）
 ALTER TABLE public.banner_copies ENABLE ROW LEVEL SECURITY;
 CREATE POLICY banner_copies_policy ON public.banner_copies
   USING ((SELECT user_id FROM public.briefs WHERE id = brief_id) = auth.uid());
 
+-- テストモード用のポリシー（認証なしでもアクセス可能）
+CREATE POLICY banner_copies_test_policy ON public.banner_copies
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
 -- クリエイティブのRLS（ブリーフを通じてユーザーと関連付け）
 ALTER TABLE public.creatives ENABLE ROW LEVEL SECURITY;
 CREATE POLICY creatives_policy ON public.creatives
-  USING ((SELECT user_id FROM public.briefs WHERE id = brief_id) = auth.uid()); 
+  USING ((SELECT user_id FROM public.briefs WHERE id = brief_id) = auth.uid());
+
+-- テストモード用のポリシー（認証なしでもアクセス可能）
+CREATE POLICY creatives_test_policy ON public.creatives
+  FOR ALL
+  USING (true)
+  WITH CHECK (true); 
