@@ -60,8 +60,10 @@ CREATE TABLE IF NOT EXISTS public.creatives (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
   size TEXT NOT NULL DEFAULT '1080x1080' CHECK (size ~ '^\d+x\d+$'), -- バナーサイズ（正規表現でフォーマット検証）
   banner_size TEXT DEFAULT '1080x1080' CHECK (banner_size ~ '^\d+x\d+$'), -- 後方互換性のため
-  background_style TEXT DEFAULT 'pattern' CHECK (background_style IN ('gradient', 'pattern')),
+  background_style TEXT DEFAULT 'pattern' CHECK (background_style IN ('gradient', 'pattern', 'custom_image')), -- カスタム画像オプション追加
   pattern_type TEXT DEFAULT 'dots' CHECK (pattern_type IN ('dots', 'stripes', 'grid', 'diamond')),
+  background_image_url TEXT, -- カスタム背景画像のURL
+  text_overlay_settings JSONB DEFAULT '{"position": "center", "color": "#ffffff", "shadow": true}', -- テキストオーバーレイ設定
   image_url TEXT NOT NULL,
   copy TEXT, -- 従来の広告コピー（後方互換性のため保持）
   status TEXT DEFAULT 'created' CHECK (status IN ('created', 'liked', 'disliked', 'approved', 'uploaded')),

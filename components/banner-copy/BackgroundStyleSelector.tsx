@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Palette, Zap, Grid3X3, Sparkles } from 'lucide-react';
+import { Palette, Zap, Grid3X3, Sparkles, Image as ImageIcon } from 'lucide-react';
+import ImageUploader from './ImageUploader';
 
 export interface BackgroundStyle {
   id: string;
   name: string;
-  type: 'gradient' | 'pattern';
+  type: 'gradient' | 'pattern' | 'custom_image';
   description: string;
   icon: React.ReactNode;
   preview: React.ReactNode;
@@ -50,6 +51,19 @@ const BACKGROUND_STYLES: BackgroundStyle[] = [
             ))}
           </div>
         </div>
+      </div>
+    )
+  },
+  {
+    id: 'custom_image',
+    name: 'カスタム画像背景',
+    type: 'custom_image',
+    description: 'お好みの画像をアップロードして背景に使用（中速生成）',
+    icon: <ImageIcon className="h-4 w-4" />,
+    speed: 'medium',
+    preview: (
+      <div className="w-full h-16 rounded bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center">
+        <ImageIcon className="h-8 w-8 text-gray-400" />
       </div>
     )
   }
@@ -125,15 +139,21 @@ const PATTERN_TYPES: PatternType[] = [
 interface BackgroundStyleSelectorProps {
   selectedStyle?: BackgroundStyle;
   selectedPattern?: PatternType;
+  customImageUrl?: string;
   onStyleSelect: (style: BackgroundStyle) => void;
   onPatternSelect: (pattern: PatternType) => void;
+  onCustomImageUpload?: (imageUrl: string) => void;
+  onCustomImageRemove?: () => void;
 }
 
 export default function BackgroundStyleSelector({
   selectedStyle,
   selectedPattern,
+  customImageUrl,
   onStyleSelect,
-  onPatternSelect
+  onPatternSelect,
+  onCustomImageUpload,
+  onCustomImageRemove
 }: BackgroundStyleSelectorProps) {
   const getSpeedBadge = (speed: string) => {
     const speedConfig = {
@@ -160,7 +180,7 @@ export default function BackgroundStyleSelector({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {BACKGROUND_STYLES.map((style) => (
               <div
                 key={style.id}
@@ -184,7 +204,7 @@ export default function BackgroundStyleSelector({
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     {style.icon}
-                    <span className="font-semibold">{style.name}</span>
+                    <span className="font-semibold text-sm">{style.name}</span>
                   </div>
                   {getSpeedBadge(style.speed)}
                 </div>
@@ -195,12 +215,21 @@ export default function BackgroundStyleSelector({
                 </div>
 
                 {/* 説明 */}
-                <p className="text-sm text-gray-600">{style.description}</p>
+                <p className="text-xs text-gray-600">{style.description}</p>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
+
+      {/* カスタム画像アップロード（カスタム画像背景が選択された場合のみ表示） */}
+      {selectedStyle?.type === 'custom_image' && (
+        <ImageUploader
+          onImageUpload={onCustomImageUpload || (() => {})}
+          currentImageUrl={customImageUrl}
+          onRemoveImage={onCustomImageRemove}
+        />
+      )}
 
       {/* パターン選択（パターン背景が選択された場合のみ表示） */}
       {selectedStyle?.type === 'pattern' && (
@@ -266,6 +295,12 @@ export default function BackgroundStyleSelector({
               <div className="flex items-center gap-2">
                 <span className="font-medium">パターン:</span>
                 <span>{selectedPattern.name}</span>
+              </div>
+            )}
+            {selectedStyle.type === 'custom_image' && customImageUrl && (
+              <div className="flex items-center gap-2">
+                <span className="font-medium">カスタム画像:</span>
+                <span className="text-green-600">✓ アップロード済み</span>
               </div>
             )}
           </div>

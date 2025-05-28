@@ -19,6 +19,7 @@ function BannerCopyContent() {
   const [selectedSize, setSelectedSize] = useState<BannerSize>(BANNER_SIZES[1]); // デフォルトはFacebookフィード
   const [selectedStyle, setSelectedStyle] = useState<BackgroundStyle>(BACKGROUND_STYLES[0]); // デフォルトはグラデーション
   const [selectedPattern, setSelectedPattern] = useState<PatternType>(PATTERN_TYPES[0]); // デフォルトはドット
+  const [customImageUrl, setCustomImageUrl] = useState<string>(''); // カスタム画像URL
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingBanner, setIsGeneratingBanner] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,6 +137,16 @@ function BannerCopyContent() {
     } finally {
       setIsGeneratingBanner(false);
     }
+  };
+
+  // カスタム画像アップロードハンドラー
+  const handleCustomImageUpload = (imageUrl: string) => {
+    setCustomImageUrl(imageUrl);
+  };
+
+  // カスタム画像削除ハンドラー
+  const handleCustomImageRemove = () => {
+    setCustomImageUrl('');
   };
 
   const renderStepContent = () => {
@@ -263,8 +274,11 @@ function BannerCopyContent() {
             <BackgroundStyleSelector
               selectedStyle={selectedStyle}
               selectedPattern={selectedPattern}
+              customImageUrl={customImageUrl}
               onStyleSelect={setSelectedStyle}
               onPatternSelect={setSelectedPattern}
+              onCustomImageUpload={handleCustomImageUpload}
+              onCustomImageRemove={handleCustomImageRemove}
             />
 
             {/* バナー生成ボタン */}
@@ -302,21 +316,37 @@ function BannerCopyContent() {
               <CardContent>
                 <div className="flex justify-center mb-6">
                   <div 
-                    className="border border-gray-300 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 flex flex-col justify-center items-center text-white p-6 rounded-lg shadow-lg"
+                    className={`
+                      border border-gray-300 flex flex-col justify-center items-center text-white p-6 rounded-lg shadow-lg relative overflow-hidden
+                      ${selectedStyle.type === 'custom_image' ? '' : 'bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500'}
+                    `}
                     style={{
                       width: Math.min(selectedSize.width / 2, 400),
                       height: Math.min(selectedSize.height / 2, 300),
                       maxWidth: '400px',
-                      maxHeight: '300px'
+                      maxHeight: '300px',
+                      backgroundImage: selectedStyle.type === 'custom_image' && customImageUrl 
+                        ? `url(${customImageUrl})` 
+                        : undefined,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat'
                     }}
                   >
-                    <h2 className="text-xl font-bold mb-2 text-center">{currentCopy?.main_text}</h2>
-                    {currentCopy?.sub_text && (
-                      <p className="text-sm mb-4 text-center opacity-90">{currentCopy.sub_text}</p>
+                    {/* カスタム画像の場合はオーバーレイを追加 */}
+                    {selectedStyle.type === 'custom_image' && customImageUrl && (
+                      <div className="absolute inset-0 bg-black bg-opacity-40"></div>
                     )}
-                    <button className="bg-white text-blue-600 px-4 py-2 rounded font-medium text-sm">
-                      {currentCopy?.cta_text}
-                    </button>
+                    
+                    <div className="relative z-10 text-center">
+                      <h2 className="text-xl font-bold mb-2 text-center drop-shadow-lg">{currentCopy?.main_text}</h2>
+                      {currentCopy?.sub_text && (
+                        <p className="text-sm mb-4 text-center opacity-90 drop-shadow-lg">{currentCopy.sub_text}</p>
+                      )}
+                      <button className="bg-white text-blue-600 px-4 py-2 rounded font-medium text-sm shadow-lg">
+                        {currentCopy?.cta_text}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -327,6 +357,7 @@ function BannerCopyContent() {
                   <p className="text-sm text-gray-600">
                     背景: {selectedStyle.name}
                     {selectedStyle.type === 'pattern' && selectedPattern && ` (${selectedPattern.name})`}
+                    {selectedStyle.type === 'custom_image' && customImageUrl && ' (カスタム画像)'}
                   </p>
                 </div>
 

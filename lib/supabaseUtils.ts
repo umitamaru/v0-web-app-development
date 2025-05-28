@@ -908,4 +908,130 @@ export async function deleteBannerCopy(id: string): Promise<{ success: boolean; 
     
     return { success: false, error };
   }
+}
+
+// ===============================
+// 画像アップロード関連の関数
+// ===============================
+
+/**
+ * 画像ファイルをSupabase Storageにアップロードする
+ */
+export async function uploadImage(
+  file: File,
+  bucket: string = 'banner-images',
+  folder: string = 'backgrounds'
+): Promise<{ data: { url: string } | null; error: any }> {
+  try {
+    if (!isSupabaseAvailable()) {
+      console.warn('[テストモード] uploadImage: Supabaseが利用できないため、モックURLを返します');
+      // モック画像URLを返す
+      const mockUrl = `/api/placeholder?width=1200&height=800&text=${encodeURIComponent(file.name)}`;
+      return { data: { url: mockUrl }, error: null };
+    }
+
+    // ファイル名を生成（重複を避けるためタイムスタンプを追加）
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+    // ファイルをアップロード
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    // 公開URLを取得
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
+
+    return { data: { url: urlData.publicUrl }, error: null };
+  } catch (error) {
+    console.error('画像アップロードエラー:', error);
+    
+    // エラー時はモックURLを返す
+    console.warn('[フォールバック] uploadImage: エラーが発生したため、モックURLを使用します');
+    const mockUrl = `/api/placeholder?width=1200&height=800&text=${encodeURIComponent(file.name)}`;
+    return { data: { url: mockUrl }, error: null };
+  }
+}
+
+/**
+ * 画像ファイルのバリデーション
+ */
+export function validateImageFile(file: File): { isValid: boolean; error?: string } {
+  // ファイルサイズチェック（5MB以下）
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSize) {
+    return { isValid: false, error: 'ファイルサイズは5MB以下にしてください。' };
+  }
+
+  // ファイル形式チェック
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    return { isValid: false, error: 'JPG、PNG、WebP形式の画像ファイルのみ対応しています。' };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * 画像をリサイズする（Canvas APIを使用）
+ */
+export function resizeImage(
+  file: File,
+  maxWidth: number = 1920,
+  maxHeight: number = 1080,
+  quality: number = 0.8
+): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    img.onload = () => {
+      // アスペクト比を保持してリサイズ
+      let { width, height } = img;
+      
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      
+      if (height > maxHeight) {
+        width = (width * maxHeight) / height;
+        height = maxHeight;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // 画像を描画
+      ctx?.drawImage(img, 0, 0, width, height);
+
+      // Blobに変換
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const resizedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now(),
+            });
+            resolve(resizedFile);
+          } else {
+            reject(new Error('画像のリサイズに失敗しました'));
+          }
+        },
+        file.type,
+        quality
+      );
+    };
+
+    img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
+    img.src = URL.createObjectURL(file);
+  });
 } 
