@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import BannerCopyEditor from '@/components/banner-copy/BannerCopyEditor';
 import BannerSizeSelector, { BannerSize, BANNER_SIZES } from '@/components/banner-copy/BannerSizeSelector';
 import BackgroundStyleSelector, { BackgroundStyle, PatternType, BACKGROUND_STYLES, PATTERN_TYPES } from '@/components/banner-copy/BackgroundStyleSelector';
 
-export default function BannerCopyPage() {
+function BannerCopyContent() {
   const [brief, setBrief] = useState<any>(null);
   const [bannerCopies, setBannerCopies] = useState<BannerCopy[]>([]);
   const [currentCopy, setCurrentCopy] = useState<BannerCopy | null>(null);
@@ -379,5 +379,13 @@ export default function BannerCopyPage() {
         {renderStepContent()}
       </div>
     </div>
+  );
+}
+
+export default function BannerCopyPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BannerCopyContent />
+    </Suspense>
   );
 } 
