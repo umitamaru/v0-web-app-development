@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Upload, FileText, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
+import { createInterview, updateInterviewAnalysisStatus } from "@/lib/supabaseUtils"
 
 export default function InterviewPage() {
   const [activeTab, setActiveTab] = useState("text")
@@ -36,17 +38,79 @@ A: 本当に時短になって、栄養もしっかり摂れて、おいしけ�
   // ファイルが選択されたことを示すモックデータ
   const [mockFileName, setMockFileName] = useState("N1インタビュー録_健康食品.mp3")
   const [mockFileSize, setMockFileSize] = useState(3240) // KB
+  const [currentUser, setCurrentUser] = useState<{id: string} | null>(null)
+  const [interviewId, setInterviewId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  const handleTextUpload = () => {
-    if (!textContent.trim()) return
+  // ユーザーの認証状態を確認
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession()
+      
+      if (data?.session?.user) {
+        setCurrentUser({
+          id: data.session.user.id
+        })
+      }
+      // 実際の実装では未認証の場合はログインページにリダイレクト
+      // else {
+      //   router.push('/login')
+      // }
+    }
+    
+    checkUser()
+  }, [router])
 
+  const handleTextUpload = async () => {
+    if (!textContent.trim()) return
     setIsAnalyzing(true)
-    // 実際の実装ではここでAPIリクエストを行い、テキスト分析を実行
-    setTimeout(() => {
+    
+    try {
+      // デモ用に仮のユーザーIDを使用（実際の実装では認証済みユーザーIDを使用）
+      const userId = currentUser?.id || 'demo-user-id'
+      
+      // Supabaseにインタビューを保存
+      const { data: interview, error: createError } = await createInterview(
+        'インタビュー録', // タイトル
+        textContent, // 内容
+        userId
+      )
+      
+      if (createError) {
+        throw createError
+      }
+      
+      setInterviewId(interview.id)
+      
+      // AIによる分析処理（実際の実装ではここでAPIを呼び出す）
+      setTimeout(async () => {
+        // 分析結果のモックデータ
+        const mockAnalysisResult = {
+          persona: "30代前半の会社員。都市部に住み、IT企業で働いている。平日は朝から夜まで忙しく、自炊する時間がほとんどない。健康意識は高いが、実際の行動が伴っていない。",
+          problem: "忙しい日常の中で、栄養バランスの取れた食事を摂る時間がなく、健康に不安を感じている。コンビニ食や外食が多く、栄養が偏りがちで、最近疲れやすさや体調不良を感じることが増えてきた。",
+          benefit: "時間をかけずに栄養バランスの取れた食事が摂れ、健康的な生活を維持できる。手軽に始められ、継続しやすいため、忙しい日々の中でも自分の健康を管理できる安心感が得られる。",
+          requiredWords: "時短,栄養,健康,簡単",
+        }
+        
+        // 分析結果を保存
+        if (interview?.id) {
+          await updateInterviewAnalysisStatus(
+            interview.id,
+            'completed',
+            mockAnalysisResult
+          )
+        }
+        
+        setIsAnalyzing(false)
+        router.push(`/brief?source=interview&id=${interview?.id || ''}`)
+      }, 3000)
+      
+    } catch (err: any) {
+      console.error('インタビュー処理エラー:', err)
+      setError(err.message || 'インタビュー処理中にエラーが発生しました。')
       setIsAnalyzing(false)
-      router.push("/brief?source=interview")
-    }, 3000)
+    }
   }
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,20 +120,65 @@ A: 本当に時短になって、栄養もしっかり摂れて、おいしけ�
     }
   }
 
-  const handleFileSubmit = () => {
+  const handleFileSubmit = async () => {
     if (!selectedFile && !mockFileName) return
 
     setIsUploading(true)
-    // 実際の実装ではここでファイルアップロードとAPIリクエストを行う
-    setTimeout(() => {
+    
+    try {
+      // 実際の実装ではここでSupabase Storageにファイルをアップロード
+      setTimeout(async () => {
+        setIsUploading(false)
+        setIsAnalyzing(true)
+        
+        // デモ用に仮のユーザーIDとファイルURLを使用
+        const userId = currentUser?.id || 'demo-user-id'
+        const mockFileUrl = `https://storage.example.com/interviews/${mockFileName}`
+        
+        // Supabaseにインタビューを保存
+        const { data: interview, error: createError } = await createInterview(
+          mockFileName, // タイトル
+          '音声ファイルから抽出されたテキスト（実際の実装では音声認識APIを使用）', // 内容
+          userId,
+          mockFileUrl,
+          'audio/mp3'
+        )
+        
+        if (createError) {
+          throw createError
+        }
+        
+        setInterviewId(interview.id)
+        
+        // AIによる分析処理（実際の実装ではここでAPIを呼び出す）
+        setTimeout(async () => {
+          // 分析結果のモックデータ
+          const mockAnalysisResult = {
+            persona: "30代前半の会社員。都市部に住み、IT企業で働いている。平日は朝から夜まで忙しく、自炊する時間がほとんどない。健康意識は高いが、実際の行動が伴っていない。",
+            problem: "忙しい日常の中で、栄養バランスの取れた食事を摂る時間がなく、健康に不安を感じている。コンビニ食や外食が多く、栄養が偏りがちで、最近疲れやすさや体調不良を感じることが増えてきた。",
+            benefit: "時間をかけずに栄養バランスの取れた食事が摂れ、健康的な生活を維持できる。手軽に始められ、継続しやすいため、忙しい日々の中でも自分の健康を管理できる安心感が得られる。",
+            requiredWords: "時短,栄養,健康,簡単",
+          }
+          
+          // 分析結果を保存
+          if (interview?.id) {
+            await updateInterviewAnalysisStatus(
+              interview.id,
+              'completed',
+              mockAnalysisResult
+            )
+          }
+          
+          setIsAnalyzing(false)
+          router.push(`/brief?source=interview&id=${interview?.id || ''}`)
+        }, 3000)
+      }, 2000)
+    } catch (err: any) {
+      console.error('インタビュー処理エラー:', err)
+      setError(err.message || 'インタビュー処理中にエラーが発生しました。')
       setIsUploading(false)
-      setIsAnalyzing(true)
-      // 分析処理
-      setTimeout(() => {
-        setIsAnalyzing(false)
-        router.push("/brief?source=interview")
-      }, 3000)
-    }, 2000)
+      setIsAnalyzing(false)
+    }
   }
 
   return (
@@ -90,6 +199,12 @@ A: 本当に時短になって、栄養もしっかり摂れて、おいしけ�
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+          
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="text" className="flex items-center gap-2">

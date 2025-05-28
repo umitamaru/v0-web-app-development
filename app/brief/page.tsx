@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2, ArrowLeft, Wand2, RefreshCw, FileText } from "lucide-react"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
+import { getInterview, createBrief } from "@/lib/supabaseUtils"
 
 const formSchema = z.object({
   persona: z.string().min(10, {
@@ -42,9 +44,12 @@ export default function BriefPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
   const [hasSuggestions, setHasSuggestions] = useState(false)
+  const [currentUser, setCurrentUser] = useState<{id: string} | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   const fromInterview = searchParams?.get("source") === "interview"
+  const interviewId = searchParams?.get("id")
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,11 +64,72 @@ export default function BriefPage() {
     },
   })
 
-  // インタビューからの遷移の場合、AIサジェストを読み込む
+  // ユーザーの認証状態を確認
   useEffect(() => {
-    if (fromInterview) {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession()
+      
+      if (data?.session?.user) {
+        setCurrentUser({
+          id: data.session.user.id
+        })
+      }
+      // 実際の実装では未認証の場合はログインページにリダイレクト
+      // else {
+      //   router.push('/login')
+      // }
+    }
+    
+    checkUser()
+  }, [router])
+
+  // インタビューからの遷移の場合、インタビューデータを取得してAIサジェストを読み込む
+  useEffect(() => {
+    if (fromInterview && interviewId) {
       setIsLoadingSuggestions(true)
-      // 実際の実装ではここでAPIからサジェストを取得
+      
+      const fetchInterviewData = async () => {
+        try {
+          const { data: interview, error: fetchError } = await getInterview(interviewId)
+          
+          if (fetchError) {
+            throw fetchError
+          }
+          
+          if (interview && interview.analysis_result) {
+            // 分析結果をフォームにセット
+            form.setValue("persona", interview.analysis_result.persona || mockSuggestions.persona)
+            form.setValue("problem", interview.analysis_result.problem || mockSuggestions.problem)
+            form.setValue("benefit", interview.analysis_result.benefit || mockSuggestions.benefit)
+            form.setValue("requiredWords", interview.analysis_result.requiredWords || mockSuggestions.requiredWords)
+            setHasSuggestions(true)
+          } else {
+            // 分析結果がない場合はモックデータを使用
+            form.setValue("persona", mockSuggestions.persona)
+            form.setValue("problem", mockSuggestions.problem)
+            form.setValue("benefit", mockSuggestions.benefit)
+            form.setValue("requiredWords", mockSuggestions.requiredWords)
+            setHasSuggestions(true)
+          }
+        } catch (err: any) {
+          console.error('インタビューデータ取得エラー:', err)
+          setError(err.message || 'インタビューデータ取得中にエラーが発生しました。')
+          
+          // エラー時もモックデータを使用
+          form.setValue("persona", mockSuggestions.persona)
+          form.setValue("problem", mockSuggestions.problem)
+          form.setValue("benefit", mockSuggestions.benefit)
+          form.setValue("requiredWords", mockSuggestions.requiredWords)
+          setHasSuggestions(true)
+        } finally {
+          setIsLoadingSuggestions(false)
+        }
+      }
+      
+      fetchInterviewData()
+    } else if (fromInterview) {
+      // インタビューIDがない場合はモックデータを使用
+      setIsLoadingSuggestions(true)
       setTimeout(() => {
         form.setValue("persona", mockSuggestions.persona)
         form.setValue("problem", mockSuggestions.problem)
@@ -73,17 +139,39 @@ export default function BriefPage() {
         setHasSuggestions(true)
       }, 2000)
     }
-  }, [fromInterview, form])
+  }, [fromInterview, interviewId, form])
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
-    console.log(values)
-
-    // 実際の実装ではここでAPIリクエストを行い、生成処理を実行
-    setTimeout(() => {
+    
+    try {
+      // デモ用に仮のユーザーIDを使用
+      const userId = currentUser?.id || 'demo-user-id'
+      
+      // Supabaseにブリーフを保存
+      const { data: brief, error: createError } = await createBrief(
+        values.persona,
+        values.problem,
+        values.benefit,
+        userId,
+        interviewId || undefined,
+        values.requiredWords
+      )
+      
+      if (createError) {
+        throw createError
+      }
+      
+      // クリエイティブ生成ページに遷移（実際の実装ではここでAIによるクリエイティブ生成処理を実行）
+      setTimeout(() => {
+        setIsSubmitting(false)
+        router.push(`/banner-copy?brief_id=${brief?.id || ''}`)
+      }, 3000)
+    } catch (err: any) {
+      console.error('ブリーフ保存エラー:', err)
+      setError(err.message || 'ブリーフ保存中にエラーが発生しました。')
       setIsSubmitting(false)
-      router.push("/preview")
-    }, 3000)
+    }
   }
 
   function handleRegenerateSuggestions() {
@@ -131,6 +219,12 @@ export default function BriefPage() {
           )}
         </CardHeader>
         <CardContent>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+
           {fromInterview && isLoadingSuggestions && (
             <div className="flex justify-center items-center py-12">
               <div className="flex flex-col items-center gap-4">
@@ -205,7 +299,9 @@ export default function BriefPage() {
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription>製品・サービスがもたらす具体的なメリットを記述してください。</FormDescription>
+                      <FormDescription>
+                        製品やサービスがどのように問題を解決し、どんな価値をもたらすかを具体的に記述してください。
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -218,18 +314,21 @@ export default function BriefPage() {
                     <FormItem>
                       <FormLabel>必須ワード（任意）</FormLabel>
                       <FormControl>
-                        <Input placeholder="例：簡単, 時短, 栄養満点" {...field} />
+                        <Input
+                          placeholder="例：時短,健康,栄養,簡単（カンマ区切り）"
+                          {...field}
+                        />
                       </FormControl>
                       <FormDescription>
-                        広告コピーに含めたいキーワードをカンマ区切りで入力してください。
+                        広告クリエイティブに含めたい重要なキーワードがあれば、カンマ区切りで入力してください。
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {fromInterview && hasSuggestions && (
-                  <div className="flex justify-start">
+                <div className="flex justify-end gap-4">
+                  {fromInterview && (
                     <Button
                       type="button"
                       variant="outline"
@@ -242,13 +341,10 @@ export default function BriefPage() {
                       ) : (
                         <RefreshCw className="h-4 w-4" />
                       )}
-                      サジェストを再生成
+                      AIサジェストを再生成
                     </Button>
-                  </div>
-                )}
-
-                <div className="flex justify-end">
-                  <Button type="submit" size="lg" disabled={isSubmitting} className="gap-2">
+                  )}
+                  <Button type="submit" disabled={isSubmitting} className="gap-2">
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
