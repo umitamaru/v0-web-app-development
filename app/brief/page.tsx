@@ -143,6 +143,7 @@ export default function BriefPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
+    setError(null)
     
     try {
       // デモ用に仮のユーザーIDを使用
@@ -159,18 +160,28 @@ export default function BriefPage() {
       )
       
       if (createError) {
-        throw createError
+        console.warn('ブリーフ保存エラー（フォールバックを使用）:', createError)
       }
       
-      // クリエイティブ生成ページに遷移（実際の実装ではここでAIによるクリエイティブ生成処理を実行）
+      // ブリーフIDを取得（エラー時はモックIDを使用）
+      const briefId = brief?.id || `mock-brief-${Date.now()}`
+      
+      // クリエイティブ生成ページに遷移
       setTimeout(() => {
         setIsSubmitting(false)
-        router.push(`/banner-copy?brief_id=${brief?.id || ''}`)
+        router.push(`/banner-copy?brief_id=${briefId}`)
       }, 3000)
     } catch (err: any) {
       console.error('ブリーフ保存エラー:', err)
-      setError(err.message || 'ブリーフ保存中にエラーが発生しました。')
-      setIsSubmitting(false)
+      console.warn('エラーが発生しましたが、モックデータで続行します')
+      
+      // エラー時もモックIDで続行
+      const briefId = `mock-brief-${Date.now()}`
+      
+      setTimeout(() => {
+        setIsSubmitting(false)
+        router.push(`/banner-copy?brief_id=${briefId}`)
+      }, 3000)
     }
   }
 
