@@ -146,7 +146,7 @@ export default function BriefPage() {
     
     try {
       // デモ用に仮のユーザーIDを使用
-      const userId = currentUser?.id || 'demo-user-id'
+      const userId = currentUser?.id || '550e8400-e29b-41d4-a716-446655440000'
       
       // Supabaseにブリーフを保存
       const { data: brief, error: createError } = await createBrief(

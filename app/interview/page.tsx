@@ -68,7 +68,7 @@ A: 本当に時短になって、栄養もしっかり摂れて、おいしけ�
     
     try {
       // デモ用に仮のユーザーIDを使用（実際の実装では認証済みユーザーIDを使用）
-      const userId = currentUser?.id || 'demo-user-id'
+      const userId = currentUser?.id || '550e8400-e29b-41d4-a716-446655440000'
       
       // Supabaseにインタビューを保存
       const { data: interview, error: createError } = await createInterview(
@@ -132,7 +132,7 @@ A: 本当に時短になって、栄養もしっかり摂れて、おいしけ�
         setIsAnalyzing(true)
         
         // デモ用に仮のユーザーIDとファイルURLを使用
-        const userId = currentUser?.id || 'demo-user-id'
+        const userId = currentUser?.id || '550e8400-e29b-41d4-a716-446655440000'
         const mockFileUrl = `https://storage.example.com/interviews/${mockFileName}`
         
         // Supabaseにインタビューを保存

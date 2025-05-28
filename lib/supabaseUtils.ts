@@ -16,6 +16,9 @@ export interface BannerCopy {
 // テストモードかどうかを判定（環境変数が設定されていなければテストモード）
 const isTestMode = !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+// デモ用の固定UUID（有効なUUID形式）
+const DEMO_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
+
 // モックデータ生成用のヘルパー関数
 function generateMockId() {
   return uuidv4();
@@ -109,7 +112,7 @@ export async function getInterview(id: string) {
       return {
         data: {
           id,
-          user_id: 'demo-user-id',
+          user_id: DEMO_USER_ID,
           title: 'モックインタビュー',
           content: 'これはテスト用のモックインタビューデータです。',
           created_at: getCurrentTimestamp(),
@@ -142,7 +145,7 @@ export async function getInterview(id: string) {
       return {
         data: {
           id,
-          user_id: 'demo-user-id',
+          user_id: DEMO_USER_ID,
           title: 'モックインタビュー',
           content: 'これはテスト用のモックインタビューデータです。',
           created_at: getCurrentTimestamp(),
@@ -374,7 +377,7 @@ export async function getBrief(id: string) {
       return {
         data: {
           id,
-          user_id: 'demo-user-id',
+          user_id: DEMO_USER_ID,
           persona: "30代前半の会社員。都市部に住み、IT企業で働いている。平日は朝から夜まで忙しく、自炊する時間がほとんどない。健康意識は高いが、実際の行動が伴っていない。",
           problem: "忙しい日常の中で、栄養バランスの取れた食事を摂る時間がなく、健康に不安を感じている。コンビニ食や外食が多く、栄養が偏りがちで、最近疲れやすさや体調不良を感じることが増えてきた。",
           benefit: "時間をかけずに栄養バランスの取れた食事が摂れ、健康的な生活を維持できる。手軽に始められ、継続しやすいため、忙しい日々の中でも自分の健康を管理できる安心感が得られる。",
@@ -402,7 +405,7 @@ export async function getBrief(id: string) {
       return {
         data: {
           id,
-          user_id: 'demo-user-id',
+          user_id: DEMO_USER_ID,
           persona: "30代前半の会社員。都市部に住み、IT企業で働いている。平日は朝から夜まで忙しく、自炊する時間がほとんどない。健康意識は高いが、実際の行動が伴っていない。",
           problem: "忙しい日常の中で、栄養バランスの取れた食事を摂る時間がなく、健康に不安を感じている。コンビニ食や外食が多く、栄養が偏りがちで、最近疲れやすさや体調不良を感じることが増えてきた。",
           benefit: "時間をかけずに栄養バランスの取れた食事が摂れ、健康的な生活を維持できる。手軽に始められ、継続しやすいため、忙しい日々の中でも自分の健康を管理できる安心感が得られる。",
