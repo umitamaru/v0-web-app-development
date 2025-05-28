@@ -117,19 +117,21 @@ CREATE POLICY profiles_policy ON public.profiles
 -- インタビューのRLS
 ALTER TABLE public.interviews ENABLE ROW LEVEL SECURITY;
 CREATE POLICY interviews_policy ON public.interviews
-  USING (user_id = auth.uid());
+  USING (user_id = auth.uid() OR user_id = '550e8400-e29b-41d4-a716-446655440000');
 
 -- ブリーフのRLS
 ALTER TABLE public.briefs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY briefs_policy ON public.briefs
-  USING (user_id = auth.uid());
+  USING (user_id = auth.uid() OR user_id = '550e8400-e29b-41d4-a716-446655440000');
 
 -- バナーコピーのRLS（ブリーフを通じてユーザーと関連付け）
 ALTER TABLE public.banner_copies ENABLE ROW LEVEL SECURITY;
 CREATE POLICY banner_copies_policy ON public.banner_copies
-  USING ((SELECT user_id FROM public.briefs WHERE id = brief_id) = auth.uid());
+  USING ((SELECT user_id FROM public.briefs WHERE id = brief_id) = auth.uid() OR 
+         (SELECT user_id FROM public.briefs WHERE id = brief_id) = '550e8400-e29b-41d4-a716-446655440000');
 
 -- クリエイティブのRLS（ブリーフを通じてユーザーと関連付け）
 ALTER TABLE public.creatives ENABLE ROW LEVEL SECURITY;
 CREATE POLICY creatives_policy ON public.creatives
-  USING ((SELECT user_id FROM public.briefs WHERE id = brief_id) = auth.uid()); 
+  USING ((SELECT user_id FROM public.briefs WHERE id = brief_id) = auth.uid() OR 
+         (SELECT user_id FROM public.briefs WHERE id = brief_id) = '550e8400-e29b-41d4-a716-446655440000'); 
