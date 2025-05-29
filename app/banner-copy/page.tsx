@@ -329,6 +329,14 @@ function BannerCopyContent() {
                   <Button variant="outline" onClick={() => setStep('design')}>
                     設定を変更
                   </Button>
+                  <Button 
+                    onClick={() => router.push(`/banner-editor?brief_id=${briefId}&custom_image=${encodeURIComponent(customImageUrl || '')}`)}
+                    variant="outline" 
+                    className="gap-2"
+                  >
+                    <Wand2 className="h-4 w-4" />
+                    高度なエディター
+                  </Button>
                   <Button className="gap-2">
                     <Download className="h-4 w-4" />
                     ダウンロード
