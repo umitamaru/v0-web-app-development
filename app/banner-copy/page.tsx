@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Wand2, Loader2, Download } from 'lucide-react';
+import { ArrowLeft, Wand2, Loader2, Download, Check } from 'lucide-react';
 import Link from 'next/link';
 import { getBrief, generateBannerCopy, getBriefBannerCopies } from '@/lib/supabaseUtils';
 import { BannerCopy } from '@/lib/supabaseUtils';
@@ -335,36 +335,62 @@ function BannerCopyContent() {
       </div>
 
       {/* ステップインジケーター */}
-      <div className="max-w-3xl mx-auto mb-8">
-        <div className="flex items-center justify-center space-x-4">
+      <div className="max-w-4xl mx-auto mb-8">
+        <div className="flex items-center justify-center space-x-2 md:space-x-4">
           {[
-            { key: 'design', label: 'デザイン設定', icon: '🎨' },
-            { key: 'preview', label: 'プレビュー', icon: '👀' }
+            { key: 'interview', label: 'インタビューアップロード', icon: '📝', status: 'completed' },
+            { key: 'brief', label: '広告クリエイティブブリーフ', icon: '📋', status: 'completed' },
+            { key: 'design', label: 'デザイン設定', icon: '🎨', status: step === 'design' ? 'current' : 'completed' },
+            { key: 'preview', label: 'プレビュー', icon: '👀', status: step === 'preview' ? 'current' : 'pending' }
           ].map((stepItem, index) => (
             <div key={stepItem.key} className="flex items-center">
-              <div className={`
-                flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium
-                ${step === stepItem.key 
-                  ? 'bg-blue-600 text-white' 
-                  : index < ['design', 'preview'].indexOf(step)
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }
-              `}>
-                {stepItem.icon}
+              <div className="flex flex-col items-center">
+                <div className={`
+                  flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium transition-colors
+                  ${stepItem.status === 'current'
+                    ? 'bg-blue-600 text-white' 
+                    : stepItem.status === 'completed'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  }
+                `}>
+                  {stepItem.status === 'completed' ? (
+                    <Check className="h-5 w-5" />
+                  ) : stepItem.status === 'current' ? (
+                    <div className="flex items-center justify-center">
+                      {stepItem.icon}
+                    </div>
+                  ) : (
+                    stepItem.icon
+                  )}
+                </div>
+                <span className={`mt-2 text-xs font-medium text-center max-w-20 leading-tight ${
+                  stepItem.status === 'current' 
+                    ? 'text-blue-600' 
+                    : stepItem.status === 'completed'
+                      ? 'text-green-600'
+                      : 'text-gray-500'
+                }`}>
+                  {stepItem.label}
+                </span>
               </div>
-              <span className={`ml-2 text-sm font-medium ${
-                step === stepItem.key ? 'text-blue-600' : 'text-gray-500'
-              }`}>
-                {stepItem.label}
-              </span>
-              {index < 1 && (
-                <div className={`w-8 h-0.5 mx-4 ${
-                  index < ['design', 'preview'].indexOf(step) ? 'bg-green-600' : 'bg-gray-200'
+              {index < 3 && (
+                <div className={`w-6 md:w-8 h-0.5 mx-1 md:mx-2 transition-colors ${
+                  stepItem.status === 'completed' ? 'bg-green-600' : 'bg-gray-200'
                 }`} />
               )}
             </div>
           ))}
+        </div>
+        
+        {/* 進行状況の説明 */}
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-600">
+            {step === 'design' 
+              ? 'バナーコピーとデザインを設定してください' 
+              : 'バナーのプレビューを確認できます'
+            }
+          </p>
         </div>
       </div>
 
