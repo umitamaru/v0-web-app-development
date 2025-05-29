@@ -17,7 +17,7 @@ function BannerCopyContent() {
   const [bannerCopies, setBannerCopies] = useState<BannerCopy[]>([]);
   const [currentCopy, setCurrentCopy] = useState<BannerCopy | null>(null);
   const [selectedSize, setSelectedSize] = useState<BannerSize>(BANNER_SIZES[1]); // デフォルトはFacebookフィード
-  const [selectedStyle, setSelectedStyle] = useState<BackgroundStyle>(BACKGROUND_STYLES[0]); // デフォルトはグラデーション
+  const [selectedStyle, setSelectedStyle] = useState<BackgroundStyle>(BACKGROUND_STYLES[2]); // デフォルトはカスタム画像
   const [selectedPattern, setSelectedPattern] = useState<PatternType>(PATTERN_TYPES[0]); // デフォルトはドット
   const [customImageUrl, setCustomImageUrl] = useState<string>(''); // カスタム画像URL
   const [isGenerating, setIsGenerating] = useState(false);
@@ -272,11 +272,7 @@ function BannerCopyContent() {
 
             {/* 背景スタイル選択 */}
             <BackgroundStyleSelector
-              selectedStyle={selectedStyle}
-              selectedPattern={selectedPattern}
               customImageUrl={customImageUrl}
-              onStyleSelect={setSelectedStyle}
-              onPatternSelect={setSelectedPattern}
               onCustomImageUpload={handleCustomImageUpload}
               onCustomImageRemove={handleCustomImageRemove}
             />
@@ -318,14 +314,14 @@ function BannerCopyContent() {
                   <div 
                     className={`
                       border border-gray-300 flex flex-col justify-center items-center text-white p-6 rounded-lg shadow-lg relative overflow-hidden
-                      ${selectedStyle.type === 'custom_image' ? '' : 'bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500'}
+                      ${customImageUrl ? '' : 'bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500'}
                     `}
                     style={{
                       width: Math.min(selectedSize.width / 2, 400),
                       height: Math.min(selectedSize.height / 2, 300),
                       maxWidth: '400px',
                       maxHeight: '300px',
-                      backgroundImage: selectedStyle.type === 'custom_image' && customImageUrl 
+                      backgroundImage: customImageUrl 
                         ? `url(${customImageUrl})` 
                         : undefined,
                       backgroundSize: 'cover',
@@ -334,7 +330,7 @@ function BannerCopyContent() {
                     }}
                   >
                     {/* カスタム画像の場合はオーバーレイを追加 */}
-                    {selectedStyle.type === 'custom_image' && customImageUrl && (
+                    {customImageUrl && (
                       <div className="absolute inset-0 bg-black bg-opacity-40"></div>
                     )}
                     
@@ -355,9 +351,7 @@ function BannerCopyContent() {
                     サイズ: {selectedSize.dimensions} ({selectedSize.platform})
                   </p>
                   <p className="text-sm text-gray-600">
-                    背景: {selectedStyle.name}
-                    {selectedStyle.type === 'pattern' && selectedPattern && ` (${selectedPattern.name})`}
-                    {selectedStyle.type === 'custom_image' && customImageUrl && ' (カスタム画像)'}
+                    背景: {customImageUrl ? 'カスタム画像' : '画像未設定'}
                   </p>
                 </div>
 

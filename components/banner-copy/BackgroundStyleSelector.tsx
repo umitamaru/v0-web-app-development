@@ -137,176 +137,22 @@ const PATTERN_TYPES: PatternType[] = [
 ];
 
 interface BackgroundStyleSelectorProps {
-  selectedStyle?: BackgroundStyle;
-  selectedPattern?: PatternType;
   customImageUrl?: string;
-  onStyleSelect: (style: BackgroundStyle) => void;
-  onPatternSelect: (pattern: PatternType) => void;
   onCustomImageUpload?: (imageUrl: string) => void;
   onCustomImageRemove?: () => void;
 }
 
 export default function BackgroundStyleSelector({
-  selectedStyle,
-  selectedPattern,
   customImageUrl,
-  onStyleSelect,
-  onPatternSelect,
   onCustomImageUpload,
   onCustomImageRemove
 }: BackgroundStyleSelectorProps) {
-  const getSpeedBadge = (speed: string) => {
-    const speedConfig = {
-      fast: { label: '高速', color: 'bg-green-100 text-green-800' },
-      medium: { label: '中速', color: 'bg-yellow-100 text-yellow-800' },
-      slow: { label: '低速', color: 'bg-red-100 text-red-800' }
-    };
-    
-    const config = speedConfig[speed as keyof typeof speedConfig];
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
-        {config.label}
-      </span>
-    );
-  };
-
   return (
-    <div className="space-y-6">
-      {/* 背景スタイル選択 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            🎨 背景スタイル選択
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {BACKGROUND_STYLES.map((style) => (
-              <div
-                key={style.id}
-                className={`
-                  relative border rounded-lg p-4 cursor-pointer transition-all duration-200
-                  ${selectedStyle?.id === style.id 
-                    ? 'border-blue-500 bg-blue-50 shadow-md' 
-                    : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
-                  }
-                `}
-                onClick={() => onStyleSelect(style)}
-              >
-                {/* 選択インジケーター */}
-                {selectedStyle?.id === style.id && (
-                  <div className="absolute top-2 right-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  </div>
-                )}
-
-                {/* アイコンと速度 */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    {style.icon}
-                    <span className="font-semibold text-sm">{style.name}</span>
-                  </div>
-                  {getSpeedBadge(style.speed)}
-                </div>
-
-                {/* プレビュー */}
-                <div className="mb-3">
-                  {style.preview}
-                </div>
-
-                {/* 説明 */}
-                <p className="text-xs text-gray-600">{style.description}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* カスタム画像アップロード（カスタム画像背景が選択された場合のみ表示） */}
-      {selectedStyle?.type === 'custom_image' && (
-        <ImageUploader
-          onImageUpload={onCustomImageUpload || (() => {})}
-          currentImageUrl={customImageUrl}
-          onRemoveImage={onCustomImageRemove}
-        />
-      )}
-
-      {/* パターン選択（パターン背景が選択された場合のみ表示） */}
-      {selectedStyle?.type === 'pattern' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Grid3X3 className="h-5 w-5" />
-              パターンタイプ選択
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {PATTERN_TYPES.map((pattern) => (
-                <div
-                  key={pattern.id}
-                  className={`
-                    relative border rounded-lg p-3 cursor-pointer transition-all duration-200
-                    ${selectedPattern?.id === pattern.id 
-                      ? 'border-blue-500 bg-blue-50 shadow-md' 
-                      : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
-                    }
-                  `}
-                  onClick={() => onPatternSelect(pattern)}
-                >
-                  {/* 選択インジケーター */}
-                  {selectedPattern?.id === pattern.id && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    </div>
-                  )}
-
-                  {/* パターン名 */}
-                  <h4 className="font-semibold text-sm mb-2">{pattern.name}</h4>
-
-                  {/* プレビュー */}
-                  <div className="mb-2">
-                    {pattern.preview}
-                  </div>
-
-                  {/* 説明 */}
-                  <p className="text-xs text-gray-600">{pattern.description}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 選択状況の表示 */}
-      {selectedStyle && (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="font-semibold text-blue-900 mb-2">選択中の設定</h4>
-          <div className="space-y-2 text-sm text-blue-800">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">背景スタイル:</span>
-              <span className="flex items-center gap-1">
-                {selectedStyle.icon}
-                {selectedStyle.name}
-              </span>
-              {getSpeedBadge(selectedStyle.speed)}
-            </div>
-            {selectedStyle.type === 'pattern' && selectedPattern && (
-              <div className="flex items-center gap-2">
-                <span className="font-medium">パターン:</span>
-                <span>{selectedPattern.name}</span>
-              </div>
-            )}
-            {selectedStyle.type === 'custom_image' && customImageUrl && (
-              <div className="flex items-center gap-2">
-                <span className="font-medium">カスタム画像:</span>
-                <span className="text-green-600">✓ アップロード済み</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+    <ImageUploader
+      onImageUpload={onCustomImageUpload || (() => {})}
+      currentImageUrl={customImageUrl}
+      onRemoveImage={onCustomImageRemove}
+    />
   );
 }
 
