@@ -6,7 +6,7 @@ export type WorkflowStep = 'interview' | 'brief' | 'design' | 'preview';
 
 interface WorkflowStepIndicatorProps {
   currentStep: WorkflowStep;
-  currentSubStep?: 'design' | 'preview'; // banner-copyページ用のサブステップ
+  currentSubStep?: 'design' | 'variations' | 'preview'; // banner-copyページ用のサブステップ
 }
 
 export default function WorkflowStepIndicator({ 
@@ -59,8 +59,12 @@ export default function WorkflowStepIndicator({
   };
 
   const getCurrentDescription = () => {
-    if (currentStep === 'design' && currentSubStep === 'preview') {
-      return 'バナーのプレビューを確認できます';
+    if (currentStep === 'design') {
+      if (currentSubStep === 'variations') {
+        return 'バナーのレイアウトバリエーションを選択できます';
+      } else if (currentSubStep === 'preview') {
+        return 'バナーのプレビューを確認できます';
+      }
     }
     
     const step = steps.find(s => s.key === currentStep);

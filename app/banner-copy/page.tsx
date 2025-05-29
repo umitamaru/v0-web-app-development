@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Wand2, Loader2, Download, Check } from 'lucide-react';
+import { ArrowLeft, Wand2, Loader2, Download, Check, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { getBrief, generateBannerCopy, getBriefBannerCopies } from '@/lib/supabaseUtils';
 import { BannerCopy } from '@/lib/supabaseUtils';
@@ -12,6 +12,8 @@ import BannerCopyEditor from '@/components/banner-copy/BannerCopyEditor';
 import BannerSizeSelector, { BannerSize, BANNER_SIZES } from '@/components/banner-copy/BannerSizeSelector';
 import BackgroundStyleSelector, { BackgroundStyle, PatternType, BACKGROUND_STYLES, PATTERN_TYPES } from '@/components/banner-copy/BackgroundStyleSelector';
 import WorkflowStepIndicator from '@/components/WorkflowStepIndicator';
+import { BannerLayoutGenerator, BannerLayoutPreview, LayoutVariation } from '@/components/banner-editor/BannerLayoutGenerator';
+import { BannerConfig } from '@/components/banner-editor/BannerEditor';
 
 function BannerCopyContent() {
   const [brief, setBrief] = useState<any>(null);
@@ -24,8 +26,12 @@ function BannerCopyContent() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingBanner, setIsGeneratingBanner] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<'design' | 'preview'>('design');
+  const [step, setStep] = useState<'design' | 'variations' | 'preview'>('design');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // 新機能: バリエーション管理
+  const [generatedVariations, setGeneratedVariations] = useState<LayoutVariation[]>([]);
+  const [selectedVariation, setSelectedVariation] = useState<LayoutVariation | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -124,11 +130,22 @@ function BannerCopyContent() {
     setError(null);
 
     try {
-      // ここで実際のバナー生成APIを呼び出す
-      // 現在はモック処理
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // バナー設定を作成
+      const bannerConfig: BannerConfig = {
+        width: selectedSize.width,
+        height: selectedSize.height,
+        backgroundColor: '#ffffff'
+      };
+
+      // レイアウトジェネレーターを作成
+      const generator = new BannerLayoutGenerator(bannerConfig, currentCopy, customImageUrl);
       
-      setStep('preview');
+      // 3つのバリエーションを生成
+      const variations = generator.generateVariations();
+      setGeneratedVariations(variations);
+      
+      // variationsステップに移動
+      setStep('variations');
     } catch (err) {
       console.error('バナー生成エラー:', err);
       setError('バナー生成に失敗しました。');
@@ -161,6 +178,18 @@ function BannerCopyContent() {
       console.log('Preview Step: Background style will be:', customImageUrl ? 'custom image' : 'gradient');
     }
   }, [step, customImageUrl]);
+
+  // バリエーション選択
+  const handleVariationSelect = (variation: LayoutVariation) => {
+    setSelectedVariation(variation);
+  };
+
+  // バリエーション確定してプレビューへ
+  const handleConfirmVariation = () => {
+    if (selectedVariation) {
+      setStep('preview');
+    }
+  };
 
   const renderStepContent = () => {
     switch (step) {
@@ -265,6 +294,53 @@ function BannerCopyContent() {
           </div>
         );
 
+      case 'variations':
+        return (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>🎨 レイアウトバリエーションを選択</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 mb-6">
+                  3つのレイアウトパターンから最適なものを選択してください。選択後、さらに細かい調整が可能です。
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {generatedVariations.map((variation) => (
+                    <BannerLayoutPreview
+                      key={variation.id}
+                      variation={variation}
+                      bannerConfig={{
+                        width: selectedSize.width,
+                        height: selectedSize.height,
+                        backgroundColor: '#ffffff'
+                      }}
+                      customImageUrl={customImageUrl}
+                      isSelected={selectedVariation?.id === variation.id}
+                      onClick={() => handleVariationSelect(variation)}
+                    />
+                  ))}
+                </div>
+
+                <div className="flex justify-between mt-8">
+                  <Button variant="outline" onClick={() => setStep('design')}>
+                    ← 設定に戻る
+                  </Button>
+                  <Button 
+                    onClick={handleConfirmVariation}
+                    disabled={!selectedVariation}
+                    className="gap-2"
+                  >
+                    <Check className="h-4 w-4" />
+                    このレイアウトで確定
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
       case 'preview':
         return (
           <div className="space-y-6">
@@ -315,27 +391,38 @@ function BannerCopyContent() {
                     サイズ: {selectedSize.dimensions} ({selectedSize.platform})
                   </p>
                   <p className="text-sm text-gray-600">
+                    レイアウト: {selectedVariation?.name || '未選択'}
+                  </p>
+                  <p className="text-sm text-gray-600">
                     背景: {customImageUrl ? 'カスタム画像' : '画像未設定'}
                   </p>
-                  {/* デバッグ用: 画像URL表示 */}
-                  {customImageUrl && (
-                    <p className="text-xs text-gray-500 break-all">
-                      URL: {customImageUrl}
-                    </p>
-                  )}
                 </div>
 
                 <div className="flex justify-center gap-4 mt-6">
-                  <Button variant="outline" onClick={() => setStep('design')}>
-                    設定を変更
+                  <Button variant="outline" onClick={() => setStep('variations')}>
+                    ← バリエーション選択に戻る
                   </Button>
                   <Button 
-                    onClick={() => router.push(`/banner-editor?brief_id=${briefId}&custom_image=${encodeURIComponent(customImageUrl || '')}`)}
+                    onClick={() => {
+                      const variation = selectedVariation;
+                      if (variation) {
+                        const encodedData = encodeURIComponent(JSON.stringify({
+                          bannerConfig: {
+                            width: selectedSize.width,
+                            height: selectedSize.height,
+                            backgroundColor: '#ffffff'
+                          },
+                          textElements: variation.textElements,
+                          customImageUrl: customImageUrl || ''
+                        }));
+                        router.push(`/banner-editor?brief_id=${briefId}&data=${encodedData}`);
+                      }
+                    }}
                     variant="outline" 
                     className="gap-2"
                   >
-                    <Wand2 className="h-4 w-4" />
-                    高度なエディター
+                    <Edit className="h-4 w-4" />
+                    高度なエディターで編集
                   </Button>
                   <Button className="gap-2">
                     <Download className="h-4 w-4" />
@@ -367,7 +454,7 @@ function BannerCopyContent() {
       {/* ステップインジケーター */}
       <WorkflowStepIndicator 
         currentStep="design" 
-        currentSubStep={step as 'design' | 'preview'}
+        currentSubStep={step as 'design' | 'variations' | 'preview'}
       />
 
       {/* エラー表示 */}

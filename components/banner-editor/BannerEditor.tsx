@@ -88,14 +88,16 @@ interface BannerEditorProps {
   bannerConfig: BannerConfig;
   onBannerConfigChange: (config: BannerConfig) => void;
   customImageUrl?: string;
+  initialTextElements?: TextElement[];
 }
 
 export default function BannerEditor({
   bannerConfig,
   onBannerConfigChange,
-  customImageUrl
+  customImageUrl,
+  initialTextElements
 }: BannerEditorProps) {
-  const [textElements, setTextElements] = useState<TextElement[]>([]);
+  const [textElements, setTextElements] = useState<TextElement[]>(initialTextElements || []);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });

@@ -14,18 +14,28 @@ function BannerEditorContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // バナー設定（デフォルト値）
-  const [bannerConfig, setBannerConfig] = useState<BannerConfig>({
-    width: BANNER_SIZES[1].width, // Facebookフィード
-    height: BANNER_SIZES[1].height,
-    backgroundColor: '#ffffff',
-  });
-
   const router = useRouter();
   const searchParams = useSearchParams();
   const briefId = searchParams?.get('brief_id');
   const customImageUrl = searchParams?.get('custom_image') ? 
     decodeURIComponent(searchParams.get('custom_image')!) : undefined;
+  const layoutData = searchParams?.get('data') ? 
+    JSON.parse(decodeURIComponent(searchParams.get('data')!)) : null;
+
+  // バナー設定（デフォルト値）
+  const [bannerConfig, setBannerConfig] = useState<BannerConfig>(() => {
+    if (layoutData?.bannerConfig) {
+      return layoutData.bannerConfig;
+    }
+    return {
+      width: BANNER_SIZES[1].width, // Facebookフィード
+      height: BANNER_SIZES[1].height,
+      backgroundColor: '#ffffff',
+    };
+  });
+
+  const [initialTextElements, setInitialTextElements] = useState(layoutData?.textElements || []);
+  const finalCustomImageUrl = layoutData?.customImageUrl || customImageUrl;
 
   // ブリーフデータを取得
   useEffect(() => {
@@ -126,7 +136,8 @@ function BannerEditorContent() {
       <BannerEditor
         bannerConfig={bannerConfig}
         onBannerConfigChange={setBannerConfig}
-        customImageUrl={customImageUrl}
+        customImageUrl={finalCustomImageUrl}
+        initialTextElements={initialTextElements}
       />
     </div>
   );
