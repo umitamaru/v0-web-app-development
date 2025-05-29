@@ -392,40 +392,6 @@ function BannerCopyContent() {
         </Link>
       </div>
 
-      {/* ステップインジケーター */}
-      <div className="max-w-3xl mx-auto mb-8">
-        <div className="flex items-center justify-center space-x-4">
-          {[
-            { key: 'copy', label: 'コピー生成', icon: '📝' },
-            { key: 'design', label: 'デザイン設定', icon: '🎨' },
-            { key: 'preview', label: 'プレビュー', icon: '👀' }
-          ].map((stepItem, index) => (
-            <div key={stepItem.key} className="flex items-center">
-              <div className={`
-                flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium
-                ${step === stepItem.key 
-                  ? 'bg-blue-600 text-white' 
-                  : index < ['copy', 'design', 'preview'].indexOf(step)
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }
-              `}>
-                {stepItem.icon}
-              </div>
-              <span className={`ml-2 text-sm font-medium ${
-                step === stepItem.key ? 'text-blue-600' : 'text-gray-500'
-              }`}>
-                {stepItem.label}
-              </span>
-              {index < 2 && (
-                <div className={`w-8 h-0.5 mx-4 ${
-                  index < ['copy', 'design', 'preview'].indexOf(step) ? 'bg-green-600' : 'bg-gray-200'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* エラー表示 */}
       {error && (
