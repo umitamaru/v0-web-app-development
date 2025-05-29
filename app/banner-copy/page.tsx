@@ -11,6 +11,7 @@ import { BannerCopy } from '@/lib/supabaseUtils';
 import BannerCopyEditor from '@/components/banner-copy/BannerCopyEditor';
 import BannerSizeSelector, { BannerSize, BANNER_SIZES } from '@/components/banner-copy/BannerSizeSelector';
 import BackgroundStyleSelector, { BackgroundStyle, PatternType, BACKGROUND_STYLES, PATTERN_TYPES } from '@/components/banner-copy/BackgroundStyleSelector';
+import WorkflowStepIndicator from '@/components/WorkflowStepIndicator';
 
 function BannerCopyContent() {
   const [brief, setBrief] = useState<any>(null);
@@ -335,64 +336,10 @@ function BannerCopyContent() {
       </div>
 
       {/* ステップインジケーター */}
-      <div className="max-w-4xl mx-auto mb-8">
-        <div className="flex items-center justify-center space-x-2 md:space-x-4">
-          {[
-            { key: 'interview', label: 'インタビューアップロード', icon: '📝', status: 'completed' },
-            { key: 'brief', label: '広告クリエイティブブリーフ', icon: '📋', status: 'completed' },
-            { key: 'design', label: 'デザイン設定', icon: '🎨', status: step === 'design' ? 'current' : 'completed' },
-            { key: 'preview', label: 'プレビュー', icon: '👀', status: step === 'preview' ? 'current' : 'pending' }
-          ].map((stepItem, index) => (
-            <div key={stepItem.key} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <div className={`
-                  flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium transition-colors
-                  ${stepItem.status === 'current'
-                    ? 'bg-blue-600 text-white' 
-                    : stepItem.status === 'completed'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-200 text-gray-600'
-                  }
-                `}>
-                  {stepItem.status === 'completed' ? (
-                    <Check className="h-5 w-5" />
-                  ) : stepItem.status === 'current' ? (
-                    <div className="flex items-center justify-center">
-                      {stepItem.icon}
-                    </div>
-                  ) : (
-                    stepItem.icon
-                  )}
-                </div>
-                <span className={`mt-2 text-xs font-medium text-center max-w-20 leading-tight ${
-                  stepItem.status === 'current' 
-                    ? 'text-blue-600' 
-                    : stepItem.status === 'completed'
-                      ? 'text-green-600'
-                      : 'text-gray-500'
-                }`}>
-                  {stepItem.label}
-                </span>
-              </div>
-              {index < 3 && (
-                <div className={`w-6 md:w-8 h-0.5 mx-1 md:mx-2 transition-colors ${
-                  stepItem.status === 'completed' ? 'bg-green-600' : 'bg-gray-200'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
-        
-        {/* 進行状況の説明 */}
-        <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
-            {step === 'design' 
-              ? 'バナーコピーとデザインを設定してください' 
-              : 'バナーのプレビューを確認できます'
-            }
-          </p>
-        </div>
-      </div>
+      <WorkflowStepIndicator 
+        currentStep="design" 
+        currentSubStep={step as 'design' | 'preview'}
+      />
 
       {/* エラー表示 */}
       {error && (

@@ -13,6 +13,7 @@ import { ArrowLeft, Upload, FileText, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { createInterview, updateInterviewAnalysisStatus } from "@/lib/supabaseUtils"
+import WorkflowStepIndicator from "@/components/WorkflowStepIndicator"
 
 export default function InterviewPage() {
   const [activeTab, setActiveTab] = useState("text")
@@ -189,6 +190,9 @@ A: 本当に時短になって、栄養もしっかり摂れて、おいしけ�
           ホームに戻る
         </Link>
       </div>
+
+      {/* ステップインジケーター */}
+      <WorkflowStepIndicator currentStep="interview" />
 
       <Card className="max-w-3xl mx-auto">
         <CardHeader>

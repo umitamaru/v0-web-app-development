@@ -15,6 +15,7 @@ import { Loader2, ArrowLeft, Wand2, RefreshCw, FileText } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { getInterview, createBrief } from "@/lib/supabaseUtils"
+import WorkflowStepIndicator from "@/components/WorkflowStepIndicator"
 
 const formSchema = z.object({
   persona: z.string().min(10, {
@@ -218,6 +219,9 @@ export default function BriefPage() {
           {fromInterview ? "インタビューアップロードに戻る" : "ホームに戻る"}
         </Link>
       </div>
+
+      {/* ステップインジケーター */}
+      <WorkflowStepIndicator currentStep="brief" />
 
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
