@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
@@ -23,6 +23,17 @@ export default function ImageUploader({
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // currentImageUrlが変更された時にpreviewUrlを同期
+  useEffect(() => {
+    console.log('ImageUploader: currentImageUrl changed to:', currentImageUrl);
+    setPreviewUrl(currentImageUrl || null);
+  }, [currentImageUrl]);
+
+  // デバッグ用: previewUrlの変更をログ出力
+  useEffect(() => {
+    console.log('ImageUploader: previewUrl updated to:', previewUrl);
+  }, [previewUrl]);
+
   const handleFileSelect = async (file: File) => {
     setError(null);
     setIsUploading(true);
@@ -35,12 +46,15 @@ export default function ImageUploader({
         return;
       }
 
-      // プレビュー表示
-      const objectUrl = URL.createObjectURL(file);
-      setPreviewUrl(objectUrl);
+      console.log('ImageUploader: Starting file selection process for:', file.name);
+
+      // プレビュー表示用の一時的なObjectURL
+      const tempObjectUrl = URL.createObjectURL(file);
+      setPreviewUrl(tempObjectUrl);
 
       // 画像をリサイズ
       const resizedFile = await resizeImage(file, 1920, 1080, 0.8);
+      console.log('ImageUploader: Image resized successfully');
 
       // アップロード
       const { data, error: uploadError } = await uploadImage(resizedFile);
@@ -50,10 +64,16 @@ export default function ImageUploader({
       }
 
       if (data?.url) {
+        console.log('ImageUploader: Upload successful, calling onImageUpload with URL:', data.url);
         onImageUpload(data.url);
-        // オブジェクトURLをクリーンアップ
-        URL.revokeObjectURL(objectUrl);
+        
+        // 一時的なObjectURLをクリーンアップ
+        URL.revokeObjectURL(tempObjectUrl);
+        
+        // 最終的なURLでプレビューを更新
         setPreviewUrl(data.url);
+      } else {
+        throw new Error('アップロード後のURLが取得できませんでした');
       }
     } catch (err) {
       console.error('画像アップロードエラー:', err);

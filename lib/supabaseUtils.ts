@@ -923,16 +923,21 @@ export async function uploadImage(
   folder: string = 'backgrounds'
 ): Promise<{ data: { url: string } | null; error: any }> {
   try {
+    console.log('uploadImage: Starting upload for file:', file.name, 'Size:', file.size);
+    
     if (!isSupabaseAvailable()) {
-      console.warn('[テストモード] uploadImage: Supabaseが利用できないため、モックURLを返します');
-      // モック画像URLを返す
-      const mockUrl = `/api/placeholder?width=1200&height=800&text=${encodeURIComponent(file.name)}`;
-      return { data: { url: mockUrl }, error: null };
+      console.warn('[テストモード] uploadImage: Supabaseが利用できないため、ローカルObjectURLを返します');
+      // 実際の画像ファイルのObjectURLを返す（テスト用）
+      const objectUrl = URL.createObjectURL(file);
+      console.log('uploadImage: Generated ObjectURL:', objectUrl);
+      return { data: { url: objectUrl }, error: null };
     }
 
     // ファイル名を生成（重複を避けるためタイムスタンプを追加）
     const fileExt = file.name.split('.').pop();
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+    console.log('uploadImage: Uploading to Supabase with filename:', fileName);
 
     // ファイルをアップロード
     const { data, error } = await supabase.storage
@@ -949,14 +954,16 @@ export async function uploadImage(
       .from(bucket)
       .getPublicUrl(fileName);
 
+    console.log('uploadImage: Supabase upload successful, URL:', urlData.publicUrl);
     return { data: { url: urlData.publicUrl }, error: null };
   } catch (error) {
     console.error('画像アップロードエラー:', error);
     
-    // エラー時はモックURLを返す
-    console.warn('[フォールバック] uploadImage: エラーが発生したため、モックURLを使用します');
-    const mockUrl = `/api/placeholder?width=1200&height=800&text=${encodeURIComponent(file.name)}`;
-    return { data: { url: mockUrl }, error: null };
+    // エラー時はローカルObjectURLを返す
+    console.warn('[フォールバック] uploadImage: エラーが発生したため、ローカルObjectURLを使用します');
+    const objectUrl = URL.createObjectURL(file);
+    console.log('uploadImage: Fallback ObjectURL:', objectUrl);
+    return { data: { url: objectUrl }, error: null };
   }
 }
 

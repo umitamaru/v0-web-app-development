@@ -139,13 +139,28 @@ function BannerCopyContent() {
 
   // カスタム画像アップロードハンドラー
   const handleCustomImageUpload = (imageUrl: string) => {
+    console.log('Banner Copy Page: Setting custom image URL to:', imageUrl);
     setCustomImageUrl(imageUrl);
   };
 
   // カスタム画像削除ハンドラー
   const handleCustomImageRemove = () => {
+    console.log('Banner Copy Page: Removing custom image URL');
     setCustomImageUrl('');
   };
+
+  // デバッグ用: customImageUrlの変更をログ出力
+  useEffect(() => {
+    console.log('Banner Copy Page: customImageUrl state updated to:', customImageUrl);
+  }, [customImageUrl]);
+
+  // デバッグ用: プレビューステップでの画像URL確認
+  useEffect(() => {
+    if (step === 'preview') {
+      console.log('Preview Step: Current customImageUrl:', customImageUrl);
+      console.log('Preview Step: Background style will be:', customImageUrl ? 'custom image' : 'gradient');
+    }
+  }, [step, customImageUrl]);
 
   const renderStepContent = () => {
     switch (step) {
@@ -302,6 +317,12 @@ function BannerCopyContent() {
                   <p className="text-sm text-gray-600">
                     背景: {customImageUrl ? 'カスタム画像' : '画像未設定'}
                   </p>
+                  {/* デバッグ用: 画像URL表示 */}
+                  {customImageUrl && (
+                    <p className="text-xs text-gray-500 break-all">
+                      URL: {customImageUrl}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex justify-center gap-4 mt-6">
