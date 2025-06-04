@@ -35,7 +35,7 @@ export default function HomePage() {
                   <Link href="/interview">
                     <Button size="lg" className="gap-2">
                       <FileText className="h-4 w-4" />
-                      インタビュー録をアップロード
+                      広告作成を始める
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
